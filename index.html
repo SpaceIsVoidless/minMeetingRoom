@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Meeting Rooms Calculator</title>
+    <style>
+        :root {
+            --primary-color: #4a90e2;
+            --secondary-color: #f5f6fa;
+            --border-color: #e1e1e1;
+            --text-color: #2c3e50;
+            --shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f8f9fa;
+            color: var(--text-color);
+            line-height: 1.6;
+        }
+
+        h1 {
+            text-align: center;
+            color: var(--primary-color);
+            margin-bottom: 30px;
+            font-weight: 600;
+        }
+
+        h3 {
+            color: var(--text-color);
+            margin-bottom: 20px;
+            font-weight: 500;
+        }
+
+        #events-container {
+            background: white;
+            padding: 25px;
+            border-radius: 8px;
+            box-shadow: var(--shadow);
+            margin-bottom: 30px;
+        }
+
+        .event-input {
+            margin: 15px 0;
+            padding: 20px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            background-color: var(--secondary-color);
+            transition: all 0.3s ease;
+        }
+
+        .event-input:hover {
+            box-shadow: var(--shadow);
+        }
+
+        .time-input {
+            display: inline-block;
+            margin-right: 20px;
+            background: white;
+            padding: 8px 12px;
+            border-radius: 4px;
+            border: 1px solid var(--border-color);
+        }
+
+        select {
+            padding: 6px 10px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            margin: 0 5px;
+            background-color: white;
+            cursor: pointer;
+        }
+
+        button {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: background-color 0.3s ease;
+        }
+
+        button:hover {
+            background-color: #357abd;
+        }
+
+        button.remove-btn {
+            background-color: #e74c3c;
+            padding: 6px 12px;
+            font-size: 0.9em;
+        }
+
+        button.remove-btn:hover {
+            background-color: #c0392b;
+        }
+
+        .result {
+            background: white;
+            padding: 25px;
+            border-radius: 8px;
+            box-shadow: var(--shadow);
+        }
+
+        .result h3 {
+            color: var(--primary-color);
+            margin-top: 0;
+        }
+
+        .event-list {
+            margin-top: 20px;
+        }
+
+        .event-item {
+            padding: 12px;
+            margin: 8px 0;
+            background-color: var(--secondary-color);
+            border-radius: 4px;
+            border-left: 4px solid var(--primary-color);
+        }
+
+        .room-badge {
+            display: inline-block;
+            background-color: var(--primary-color);
+            color: white;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 0.9em;
+            margin-left: 10px;
+        }
+
+        .controls {
+            margin-top: 20px;
+            display: flex;
+            gap: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Meeting Rooms Calculator</h1>
+    
+    <div id="events-container">
+        <h3>Schedule Your Meetings</h3>
+        <div id="event-inputs"></div>
+        <div class="controls">
+            <button onclick="addEventInput()">Add Meeting</button>
+            <button onclick="calculateRooms()">Calculate Rooms</button>
+        </div>
+    </div>
+
+    <div class="result" id="result"></div>
+
+    <script src="minMeetingRooms.js"></script>
+    <script>
+        function generateTimeOptions() {
+            let options = '';
+            for (let hour = 1; hour <= 12; hour++) {
+                for (let minute = 0; minute < 60; minute += 30) {
+                    const timeStr = `${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
+                    options += `<option value="${timeStr}">${timeStr}</option>`;
+                }
+            }
+            return options;
+        }
+
+        function timeToMinutes(time, period) {
+            const [hours, minutes] = time.split(':').map(Number);
+            let totalMinutes = hours * 60 + minutes;
+            
+            if (hours === 12) {
+                totalMinutes -= 12 * 60;
+            }
+            
+            if (period === 'PM') {
+                totalMinutes += 12 * 60;
+            }
+            
+            return totalMinutes;
+        }
+
+        function addEventInput() {
+            const container = document.getElementById('event-inputs');
+            const eventDiv = document.createElement('div');
+            eventDiv.className = 'event-input';
+            
+            const timeOptions = generateTimeOptions();
+            eventDiv.innerHTML = `
+                <div class="time-input">
+                    Start: 
+                    <select class="start-time">${timeOptions}</select>
+                    <select class="start-period">
+                        <option value="AM">AM</option>
+                        <option value="PM">PM</option>
+                    </select>
+                </div>
+                <div class="time-input">
+                    End: 
+                    <select class="end-time">${timeOptions}</select>
+                    <select class="end-period">
+                        <option value="AM">AM</option>
+                        <option value="PM">PM</option>
+                    </select>
+                </div>
+                <button class="remove-btn" onclick="this.parentElement.remove()">Remove</button>
+            `;
+            container.appendChild(eventDiv);
+        }
+
+        function calculateRooms() {
+            const events = [];
+            const eventInputs = document.getElementsByClassName('event-input');
+            
+            for (const eventInput of eventInputs) {
+                const startTime = eventInput.querySelector('.start-time').value;
+                const startPeriod = eventInput.querySelector('.start-period').value;
+                const endTime = eventInput.querySelector('.end-time').value;
+                const endPeriod = eventInput.querySelector('.end-period').value;
+                
+                const start = timeToMinutes(startTime, startPeriod);
+                const end = timeToMinutes(endTime, endPeriod);
+                
+                if (end > start) {
+                    events.push({ 
+                        start,
+                        end,
+                        displayStart: `${startTime} ${startPeriod}`,
+                        displayEnd: `${endTime} ${endPeriod}`
+                    });
+                }
+            }
+
+            if (events.length === 0) {
+                document.getElementById('result').innerHTML = '<div class="event-item">Please add at least one valid event</div>';
+                return;
+            }
+
+            const rooms = minMeetingRooms(events);
+            document.getElementById('result').innerHTML = `
+                <h3>Results</h3>
+                <p>Number of rooms needed: <strong>${rooms.rooms}</strong></p>
+                <p>Events processed: <strong>${events.length}</strong></p>
+                <div class="event-list">
+                    ${rooms.assignments.map(event => `
+                        <div class="event-item">
+                            From ${event.displayStart} to ${event.displayEnd}
+                            <span class="room-badge">Room ${event.roomId}</span>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+
+        // Add one event input by default
+        addEventInput();
+    </script>
+</body>
+</html>
