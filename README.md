@@ -2,6 +2,8 @@
 
 A JavaScript solution for calculating the minimum number of meeting rooms required to schedule a set of events without overlap. The project includes both a core algorithm implementation and a user-friendly web interface.
 
+#Project Deployed at:minmeetingroom.netlify.app
+
 ## Problem Statement
 
 Given a list of events, where each event has a start and end time, determine the minimum number of rooms needed to hold all events without any time conflicts.
